@@ -1,6 +1,6 @@
 # AgentFramework.OpenTelemetry
 
-`AgentFramework.OpenTelemetry` is a reusable OpenTelemetry layer for Microsoft Agent Framework workflows that coordinate:
+`AgentFramework.OpenTelemetry` is a reusable OpenTelemetry layer for Microsoft Agent Framework workflows that coordinates:
 
 - hosted/persistent Foundry agents
 - local in-process declarative agents
@@ -41,3 +41,8 @@ persistentOptions.AddPolicy(
 ```
 
 From there, wrap your agents with `FoundryAgent` / `LocalAgent`, and emit handoff events when the workflow routes work between them.
+
+## GitHub Actions
+
+- `CI` restores, builds, and tests the solution on Ubuntu and Windows for pushes to `main` and all pull requests.
+- `Release` runs only for pushes to `main`, creates the `.nupkg` and `.snupkg` artifacts, publishes the package to GitHub Packages, and creates a tagged GitHub release with commit-based change notes.
