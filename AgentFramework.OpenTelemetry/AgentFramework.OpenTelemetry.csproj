@@ -4,6 +4,19 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>AgentFramework.OpenTelemetry</PackageId>
+    <Title>AgentFramework.OpenTelemetry</Title>
+    <Authors>Microsoft</Authors>
+    <Company>Microsoft</Company>
+    <Description>Reusable OpenTelemetry integration for Microsoft Agent Framework workflows.</Description>
+    <PackageTags>opentelemetry;agent-framework;observability;tracing</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/msft/agentframework-opentelemetry</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +29,10 @@
     <PackageReference Include="OpenAI" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="System.ClientModel" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
 </Project>

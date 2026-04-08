@@ -1,0 +1,188 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  NUGET_XMLDOC_MODE: skip
+  PACKAGE_OUTPUT_DIRECTORY: ./artifacts/packages
+
+jobs:
+  release:
+    name: Pack and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: |
+            Directory.Build.props
+            Directory.Packages.props
+            AgentFramework.OpenTelemetry.slnx
+            **/*.csproj
+
+      - name: Determine release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch --force --tags
+
+          current_tag="$(git tag --points-at HEAD --list 'v*' | head -n 1 || true)"
+
+          if [[ -n "${current_tag}" ]]; then
+            version="${current_tag#v}"
+            previous_tag="$(git tag --list 'v*' --sort=-version:refname | grep -Fxv "${current_tag}" | head -n 1 || true)"
+          else
+            previous_tag="$(git tag --list 'v*' --sort=-version:refname | head -n 1 || true)"
+
+            if [[ -z "${previous_tag}" ]]; then
+              version="0.1.0"
+            else
+              version="${previous_tag#v}"
+              IFS='.' read -r major minor patch <<< "${version}"
+
+              if [[ -z "${major}" || -z "${minor}" || -z "${patch}" ]]; then
+                echo "Latest tag '${previous_tag}' is not in v<major>.<minor>.<patch> format." >&2
+                exit 1
+              fi
+
+              version="${major}.${minor}.$((patch + 1))"
+            fi
+          fi
+
+          tag="v${version}"
+
+          echo "previous_tag=${previous_tag}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+          echo "Releasing ${tag}"
+
+      - name: Generate release notes
+        id: notes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          notes_file="${RUNNER_TEMP}/release-notes.md"
+          previous_tag="${{ steps.version.outputs.previous_tag }}"
+          current_sha="${GITHUB_SHA}"
+
+          {
+            echo "# Release ${{ steps.version.outputs.tag }}"
+            echo
+            echo "## Changes in this release"
+
+            if [[ -n "${previous_tag}" ]]; then
+              git log --no-merges --pretty=format:'- %s (%h)' "${previous_tag}..${current_sha}"
+              echo
+              echo
+              echo "## Comparison"
+              echo "- https://github.com/${{ github.repository }}/compare/${previous_tag}...${current_sha}"
+            else
+              git log --no-merges --pretty=format:'- %s (%h)' "${current_sha}"
+            fi
+          } > "${notes_file}"
+
+          if ! grep -q '^- ' "${notes_file}"; then
+            {
+              echo
+              echo "- Initial release"
+            } >> "${notes_file}"
+          fi
+
+          echo "path=${notes_file}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore
+        run: dotnet restore AgentFramework.OpenTelemetry.slnx --nologo
+
+      - name: Build
+        run: >
+          dotnet build AgentFramework.OpenTelemetry.slnx
+          --configuration Release
+          --no-restore
+          -p:ContinuousIntegrationBuild=true
+          --nologo
+
+      - name: Test
+        run: >
+          dotnet test AgentFramework.OpenTelemetry.slnx
+          --configuration Release
+          --no-build
+          --nologo
+
+      - name: Pack NuGet package
+        run: >
+          dotnet pack AgentFramework.OpenTelemetry/AgentFramework.OpenTelemetry.csproj
+          --configuration Release
+          --no-build
+          --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+          --include-source
+          -p:ContinuousIntegrationBuild=true
+          -p:Version=${{ steps.version.outputs.version }}
+          -p:PackageVersion=${{ steps.version.outputs.version }}
+          -p:IncludeSymbols=true
+          -p:SymbolPackageFormat=snupkg
+          --nologo
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package-${{ steps.version.outputs.tag }}
+          path: ${{ env.PACKAGE_OUTPUT_DIRECTORY }}/*
+          if-no-files-found: error
+
+      - name: Publish package to GitHub Packages
+        run: |
+          dotnet nuget add source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --name github \
+            --username "${{ github.actor }}" \
+            --password "${{ secrets.GITHUB_TOKEN }}" \
+            --store-password-in-clear-text
+
+          dotnet nuget push "${{ env.PACKAGE_OUTPUT_DIRECTORY }}/*.nupkg" \
+            --source github \
+            --skip-duplicate
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${{ steps.version.outputs.tag }}"
+          notes="$(cat "${{ steps.notes.outputs.path }}")"
+
+          if gh release view "${tag}" > /dev/null 2>&1; then
+            gh release upload "${tag}" "${{ env.PACKAGE_OUTPUT_DIRECTORY }}"/* --clobber
+            gh release edit "${tag}" --title "${tag}" --notes "${notes}"
+          else
+            gh release create "${tag}" "${{ env.PACKAGE_OUTPUT_DIRECTORY }}"/* \
+              --title "${tag}" \
+              --notes-file "${{ steps.notes.outputs.path }}" \
+              --target "${GITHUB_SHA}" \
+              --latest
+          fi
