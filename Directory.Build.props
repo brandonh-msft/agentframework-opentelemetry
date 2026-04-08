@@ -1,0 +1,28 @@
+<Project>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<AnalysisLevel>latest-recommended</AnalysisLevel>
+		<AnalysisMode>Recommended</AnalysisMode>
+		<DebugType>portable</DebugType>
+		<EnableNETAnalyzers>True</EnableNETAnalyzers>
+		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<LangVersion>latest</LangVersion>
+		<NeutralLanguage>en</NeutralLanguage>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<NoWarn>$(NoWarn);1506</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!--<PackageReference Include="Microsoft.VisualStudio.Threading" PrivateAssets="all" />-->
+		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all" IncludeAssets="analyzers"/>
+		<PackageReference Include="Microsoft.Extensions.ExtraAnalyzers" PrivateAssets="all" IncludeAssets="analyzers"/>
+		<PackageReference Include="Microsoft.Extensions.EnumStrings" />
+	</ItemGroup>
+</Project>

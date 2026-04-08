@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/_Solution Items/">
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Project Path="AgentFramework.OpenTelemetry.Tests/AgentFramework.OpenTelemetry.Tests.csproj" />
+  <Project Path="AgentFramework.OpenTelemetry/AgentFramework.OpenTelemetry.csproj" />
+</Solution>
