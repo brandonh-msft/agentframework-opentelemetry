@@ -17,6 +17,7 @@
     <PackageVersion Include="OpenAI" Version="2.10.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.2" />
     <PackageVersion Include="System.ClientModel" Version="1.10.0" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
   </ItemGroup>
   <ItemGroup>
     <PackageVersion Include="coverlet.collector" Version="8.0.1" />
