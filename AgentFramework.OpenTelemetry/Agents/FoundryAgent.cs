@@ -4,9 +4,6 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 
-using OpenAI.Responses;
-
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -172,15 +169,15 @@ public sealed partial class FoundryAgent(AIAgent innerAgent, ILoggerFactory logg
         return filteredContents is not { Count: > 0 }
             ? null
             : new AgentResponseUpdate(update.Role, filteredContents)
-                {
-                    AdditionalProperties = update.AdditionalProperties,
-                    AgentId = update.AgentId,
-                    AuthorName = update.AuthorName,
-                    CreatedAt = update.CreatedAt,
-                    MessageId = update.MessageId,
-                    RawRepresentation = update.RawRepresentation,
-                    ResponseId = update.ResponseId,
-                };
+            {
+                AdditionalProperties = update.AdditionalProperties,
+                AgentId = update.AgentId,
+                AuthorName = update.AuthorName,
+                CreatedAt = update.CreatedAt,
+                MessageId = update.MessageId,
+                RawRepresentation = update.RawRepresentation,
+                ResponseId = update.ResponseId,
+            };
     }
 
     private static ToolApprovalResponseContent CreateApprovalResponse(ToolApprovalRequestContent approvalRequest)

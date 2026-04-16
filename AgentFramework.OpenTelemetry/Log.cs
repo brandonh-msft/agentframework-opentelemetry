@@ -3,6 +3,7 @@ namespace AgentFramework.OpenTelemetry
 {
 #pragma warning disable CS8019
     using Microsoft.Extensions.Logging;
+
     using System;
 #pragma warning restore CS8019
 
