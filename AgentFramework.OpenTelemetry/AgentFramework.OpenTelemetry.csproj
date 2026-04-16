@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Agents.AI.Declarative" />
+    <PackageReference Include="Microsoft.Agents.AI.Foundry" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
   </ItemGroup>
 
